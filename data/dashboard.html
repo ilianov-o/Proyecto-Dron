@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dron F450 - Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h1 { margin-bottom: 20px; color: #e94560; }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+        }
+        .metric {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .metric .label { font-size: 12px; color: #aaa; }
+        .metric .value { font-size: 28px; font-weight: bold; }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #btn-armar { background: #2ecc71; color: white; }
+        #btn-desarmar { background: #e67e22; color: white; }
+        #btn-emergencia { background: #e74c3c; color: white; font-size: 20px; padding: 20px 40px; width: 100%; max-width: 500px; }
+        #status {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .armado { background: #2ecc71; color: white; }
+        .desarmado { background: #e67e22; color: white; }
+        .emergencia { background: #e74c3c; color: white; }
+        .aterrizaje { background: #f39c12; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🚁 DRON F450 - MONITOR</h1>
+
+    <div class="metrics">
+        <div class="metric">
+            <div class="label">ROLL (°)</div>
+            <div class="value" id="roll">0.0</div>
+        </div>
+        <div class="metric">
+            <div class="label">PITCH (°)</div>
+            <div class="value" id="pitch">0.0</div>
+        </div>
+        <div class="metric">
+            <div class="label">ALTURA (m)</div>
+            <div class="value" id="altura">0.00</div>
+        </div>
+        <div class="metric">
+            <div class="label">PID</div>
+            <div class="value" id="pid">0.000</div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="btn-armar" onclick="enviarComando('armar')">🔓 ARMAR</button>
+        <button id="btn-desarmar" onclick="enviarComando('desarmar')">🔒 DESARMAR</button>
+    </div>
+
+    <button id="btn-emergencia" onclick="enviarComando('EMERGENCY_STOP')">
+        🚨 PARADA DE EMERGENCIA
+    </button>
+
+    <div id="status" class="desarmado">ESTADO: DESARMADO</div>
+
+    <script>
+        const ws = new WebSocket('ws://192.168.4.1:81');
+
+        ws.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                document.getElementById('roll').textContent = data.roll.toFixed(1);
+                document.getElementById('pitch').textContent = data.pitch.toFixed(1);
+                document.getElementById('altura').textContent = data.altura_ctrl.toFixed(2);
+                document.getElementById('pid').textContent = data.pid.toFixed(3);
+
+                const statusEl = document.getElementById('status');
+                statusEl.textContent = 'ESTADO: ' + data.modo;
+                statusEl.className = data.modo.toLowerCase();
+            } catch (e) {
+                console.error('Error parsing JSON:', e);
+            }
+        };
+
+        ws.onopen = function() {
+            console.log('Conectado al dron');
+        };
+
+        ws.onclose = function() {
+            console.log('Desconectado del dron');
+        };
+
+        function enviarComando(cmd) {
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({comando: cmd}));
+                console.log('Comando enviado:', cmd);
+            }
+        }
+    </script>
+</body>
+</html>
