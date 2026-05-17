@@ -96,3 +96,5 @@ float controlFuzzyAltitud(float error, float dt) {
 
     return salida;
 }
+
+//nikolay@hp:~/Documents/PlatformIO/Projects/Dron$ git commit -m "Actualizacion"
